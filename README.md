@@ -1,2 +1,2 @@
 # AI-Agent-Notes
-Self-study about AI Agent Projects
+Self-study Notes about AI Agent Projects
