@@ -33,7 +33,15 @@ def Causal_LM_param(
     # Total parameters for all layers
     total_transformer_params = num_layers * params_per_layer + embedding_params
 
-    return total_transformer_params
+    return {
+        'total_params': total_transformer_params,
+        'config': {
+            'vocab_size': vocab_size,
+            'hidden_size': hidden_size,
+            'num_layers': num_layers,
+            'num_attention_heads': num_attention_heads
+        }
+    }
 
 def Pretrained_LM_param(model) -> int:
     from transformers import AutoConfig
@@ -65,10 +73,45 @@ def Pretrained_LM_param(model) -> int:
 
 
 def Calculate_Memory(
-        total_params:int,
+        params:dict,
         precision: str = 'fp16',
         batch_size: int = 1,
         seq_length: int = 2048,
         include_kv_cache: bool = True,
 ):
-    pass
+
+    # Bytes-precision mapping
+    precision_map = {
+        'fp32': 4,
+        'fp16': 2,
+        'bf16': 2,
+        'int8': 1,
+        'int4': 0.5
+    }
+
+    if precision not in precision_map:
+        raise ValueError(f"Unsupported precision: {precision}. Choose from {list(precision_map.keys())}")
+
+    # Memory of the weights in model
+    weight_memory = params['total_params'] * precision_map[precision] / (1024 ** 3)  # in GB
+
+    # Memory of the activations during inference
+    activation_memory = batch_size * seq_length * params['hidden_size'] * precision_map[precision] / (1024 ** 3)  # in GB
+
+    # Memory of the key-value cache (if applicable)
+    if include_kv_cache:
+        kv_cache_memory = batch_size * seq_length * params['hidden_size'] * 2 * params['num_layers'] * precision_map[precision] / (1024 ** 3)  # in GB
+    else:
+        kv_cache_memory = 0
+
+    # Total memory usage
+    total_memory = weight_memory + activation_memory + kv_cache_memory
+
+    return {
+        'weight_memory_GB': weight_memory,
+        'activation_memory_GB': activation_memory,
+        'kv_cache_memory_GB': kv_cache_memory,
+        'total_memory_GB': total_memory
+    }
+
+
