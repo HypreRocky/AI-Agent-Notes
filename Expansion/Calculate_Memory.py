@@ -35,12 +35,10 @@ def Causal_LM_param(
 
     return {
         'total_params': total_transformer_params,
-        'config': {
-            'vocab_size': vocab_size,
-            'hidden_size': hidden_size,
-            'num_layers': num_layers,
-            'num_attention_heads': num_attention_heads
-        }
+        'vocab_size': vocab_size,
+        'hidden_size': hidden_size,
+        'num_layers': num_layers,
+        'num_attention_heads': num_attention_heads
     }
 
 def Pretrained_LM_param(model) -> int:
@@ -59,16 +57,14 @@ def Pretrained_LM_param(model) -> int:
         num_layers=num_layers,
         num_attention_heads=num_attention_heads,
         intermediate_size=hidden_size,
-    )
+    )['total_params']
 
     return {
         'total_params': total_params,
-        'config': {
-            'vocab_size': vocab_size,
-            'hidden_size': hidden_size,
-            'num_layers': num_layers,
-            'num_attention_heads': num_attention_heads
-        }
+        'vocab_size': vocab_size,
+        'hidden_size': hidden_size,
+        'num_layers': num_layers,
+        'num_attention_heads': num_attention_heads
     }
 
 
@@ -114,4 +110,19 @@ def Calculate_Memory(
         'total_memory_GB': total_memory
     }
 
-
+# Example usage:
+if __name__ == "__main__":
+    model_name = "Qwen/Qwen2.5-1.5B-Instruct"  # Example model name
+    params_info = Pretrained_LM_param(model_name)
+    print(params_info)
+    memory_info = Calculate_Memory(
+        params=params_info,
+        precision='fp16',
+        batch_size=1,
+        seq_length=2048,
+        include_kv_cache=True
+    )
+    print(f"Model: {model_name}")
+    print(f"Parameters: {params_info['total_params']}")
+    for k, v in memory_info.items():
+        print(f"{k}: {v:.3f} GB")
